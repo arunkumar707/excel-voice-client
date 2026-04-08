@@ -298,6 +298,7 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
   /** Where to move the active cell after voice (or Enter) fills a value. */
   const [voiceAdvance, setVoiceAdvance] = useState<"row" | "column">("row");
   const [showLockedPopup, setShowLockedPopup] = useState(false);
+  const prevRowRef = useRef<number>(state.activeRow);
 
   const triggerLockedPopup = useCallback(() => {
     setShowLockedPopup(true);
@@ -562,6 +563,16 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
     },
     [state.grid, state.headerRow, workbookId]
   );
+
+  /** Auto-save row when user moves to a different row */
+  useEffect(() => {
+    const prev = prevRowRef.current;
+    const curr = state.activeRow;
+    if (prev !== curr && dirtyRows.has(prev)) {
+      void handleSaveRow(prev);
+    }
+    prevRowRef.current = curr;
+  }, [state.activeRow, dirtyRows, handleSaveRow]);
 
   const handleEditRow = useCallback((excelRow: number) => {
     setUnlockedRows((prev) => new Set(prev).add(excelRow));

@@ -36,7 +36,8 @@ export function isBrowserSpeechSupported(): boolean {
 
 export function startBrowserSpeech(
   callbacks: BrowserSpeechCallbacks,
-  lang = "en-IN"
+  lang = "en-IN",
+  continuous = false
 ): (() => void) | null {
   if (typeof window === "undefined") return null;
   const w = window as unknown as {
@@ -47,12 +48,16 @@ export function startBrowserSpeech(
   if (!Ctor) return null;
 
   const rec = new Ctor();
-  rec.continuous = false;
-  rec.interimResults = false;
+  rec.continuous = continuous;
+  rec.interimResults = continuous; // Use interim results for smoother feedback in long dictate
   rec.lang = lang;
 
   rec.onresult = (event: SpeechResultEventLike) => {
-    const text = event.results[0]?.[0]?.transcript?.trim() ?? "";
+    let fullTranscript = "";
+    for (let i = 0; i < event.results.length; i++) {
+        fullTranscript += event.results[i][0].transcript;
+    }
+    const text = fullTranscript.trim();
     if (text) callbacks.onResult(text);
   };
   rec.onerror = (event: SpeechErrorEventLike) => {
