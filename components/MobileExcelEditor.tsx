@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
-import { WorkbookGrid } from "@/components/WorkbookGrid";
+import { MobileWorkbookCard } from "@/components/MobileWorkbookCard";
 import type { GridCell } from "@/lib/grid-types";
 import { GRID_MAX_DATA_ROWS, GRID_MIN_DATA_ROWS } from "@/lib/grid-rows";
 import { clearAccessToken, nestFetch } from "@/lib/nest-auth-fetch";
@@ -135,7 +135,7 @@ function reducer(state: WorkbookState, action: Action): WorkbookState {
     case "NAV_ROW": {
       const maxExcelRow = state.headerRow + GRID_MAX_DATA_ROWS;
       let next = state.activeRow + action.delta;
-      next = Math.max(1, Math.min(next, maxExcelRow));
+      next = Math.max(state.headerRow + 1, Math.min(next, maxExcelRow));
       let g = state.grid.map((row) => padRow([...row], w));
       while (g.length < next) {
         g = [...g, Array(w).fill(null)];
@@ -271,7 +271,7 @@ const initialState: WorkbookState = {
 
 type Props = { workbookId: number; workbookName: string };
 
-export function ExcelEditor({ workbookId, workbookName }: Props) {
+export function MobileExcelEditor({ workbookId, workbookName }: Props) {
   const router = useRouter();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [hydrated, setHydrated] = useState(false);
@@ -651,7 +651,7 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
   };
 
   return (
-    <main className="mx-auto flex h-dvh max-h-dvh w-full max-w-6xl flex-col overflow-hidden px-3 py-2">
+    <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-3 py-2 pb-12">
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 pb-2">
         <div>
           <Link
@@ -670,10 +670,10 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href={`/mobile/excel/${workbookId}`}
-            className="shrink-0 rounded-lg bg-sky-700 px-3 py-1.5 text-xs text-white hover:bg-sky-600"
+            href={`/excel/${workbookId}?force=desktop`}
+            className="shrink-0 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs text-white hover:bg-emerald-600"
           >
-            📱 Mobile View
+            💻 Desktop View
           </Link>
           <button
             type="button"
@@ -717,7 +717,7 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
           role="grid"
           tabIndex={0}
           onKeyDown={onKeyDown}
-          className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-900/40 p-3 outline-none ring-blue-500/30 focus-visible:ring-2"
+          className="flex flex-col gap-2 rounded-xl border border-slate-700/80 bg-slate-900/40 p-3 outline-none ring-blue-500/30 focus-visible:ring-2"
         >
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
             <span>
@@ -726,7 +726,7 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
               to navigate
             </span>
           </div>
-          <WorkbookGrid
+          <MobileWorkbookCard
             grid={state.grid}
             headerRow={state.headerRow}
             activeRow={state.activeRow}
@@ -741,6 +741,7 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
             onSaveRow={(r) => void handleSaveRow(r)}
             onEditRow={handleEditRow}
             scrollRequest={scrollRequest}
+            onNavRow={(delta) => dispatch({ type: "NAV_ROW", delta })}
           />
           <div className="shrink-0 space-y-2 rounded-lg border border-slate-700/80 bg-slate-950/40 p-3">
             <p className="text-xs font-medium text-slate-400">Find row</p>
@@ -810,7 +811,7 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
                     : "border-slate-600 bg-slate-900/60 text-slate-400 hover:border-slate-500 hover:text-slate-300"
                 }`}
               >
-                Row <span aria-hidden>↓</span>
+                Row <span aria-hidden>→</span>
               </button>
               <button
                 type="button"
@@ -822,7 +823,7 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
                     : "border-slate-600 bg-slate-900/60 text-slate-400 hover:border-slate-500 hover:text-slate-300"
                 }`}
               >
-                Col <span aria-hidden>→</span>
+                Col <span aria-hidden>↓</span>
               </button>
             </div>
             <VoiceRecorder
@@ -859,3 +860,4 @@ export function ExcelEditor({ workbookId, workbookName }: Props) {
     </main>
   );
 }
+
