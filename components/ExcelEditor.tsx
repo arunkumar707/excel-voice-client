@@ -111,18 +111,37 @@ function reducer(state: WorkbookState, action: Action): WorkbookState {
         activeCol: 1,
       };
     }
-    case "SET_ACTIVE":
-      return { ...state, activeRow: action.row, activeCol: action.col };
+    case "SET_ACTIVE": {
+      let nextGrid = state.grid;
+      if (state.activeCol === 5) {
+        const width = colWidth(state.grid);
+        const r = state.activeRow - 1;
+        const row = padRow([...(nextGrid[r] || [])], width);
+        row[5] = "Given";
+        nextGrid = [...nextGrid];
+        nextGrid[r] = row;
+      }
+      return { ...state, grid: nextGrid, activeRow: action.row, activeCol: action.col };
+    }
     case "NEXT_ROW": {
       const maxExcelRow = state.headerRow + GRID_MAX_DATA_ROWS;
       const width = colWidth(state.grid);
       let nextRow = state.activeRow + 1;
       let nextCol = state.activeCol;
+      let nextGrid = state.grid;
+
+      if (state.activeCol === 5) {
+        const r = state.activeRow - 1;
+        const row = padRow([...(nextGrid[r] || [])], width);
+        row[5] = "Given";
+        nextGrid = [...nextGrid];
+        nextGrid[r] = row;
+      }
+
       if (nextRow > maxExcelRow) {
         nextRow = state.headerRow + 1;
         nextCol = Math.min(nextCol + 1, width);
       }
-      let nextGrid = state.grid;
       while (nextGrid.length < nextRow) {
         nextGrid = [...nextGrid, Array(width).fill(null)];
       }
@@ -134,15 +153,26 @@ function reducer(state: WorkbookState, action: Action): WorkbookState {
     }
     case "NAV_ROW": {
       const maxExcelRow = state.headerRow + GRID_MAX_DATA_ROWS;
-      let next = state.activeRow + action.delta;
-      next = Math.max(1, Math.min(next, maxExcelRow));
-      let g = state.grid.map((row) => padRow([...row], w));
-      while (g.length < next) {
+      let nextRow = state.activeRow + action.delta;
+      nextRow = Math.max(1, Math.min(nextRow, maxExcelRow));
+      let g = state.grid;
+
+      // Special logic: If moving away from AI (col 5), auto-fill MM (col 6) with "Given"
+      if (state.activeCol === 5) {
+        const width = colWidth(g);
+        const r = state.activeRow - 1;
+        const row = padRow([...(g[r] || [])], width);
+        row[5] = "Given";
+        g = [...g];
+        g[r] = row;
+      }
+
+      while (g.length < nextRow) {
         g = [...g, Array(w).fill(null)];
       }
       const maxTotalLen = state.headerRow + GRID_MAX_DATA_ROWS;
       if (g.length > maxTotalLen) g = g.slice(0, maxTotalLen);
-      return { ...state, grid: g, activeRow: next, activeCol: state.activeCol };
+      return { ...state, grid: g, activeRow: nextRow, activeCol: state.activeCol };
     }
     case "NAV_COL": {
       const width = colWidth(state.grid);
@@ -150,21 +180,43 @@ function reducer(state: WorkbookState, action: Action): WorkbookState {
         1,
         Math.min(state.activeCol + action.delta, width)
       );
-      return { ...state, activeCol: nextCol };
+      let nextGrid = state.grid;
+
+      // Special logic: If moving away from AI (col 5), auto-fill MM (col 6) with "Given"
+      if (state.activeCol === 5) {
+        const r = state.activeRow - 1;
+        const row = padRow([...(nextGrid[r] || [])], width);
+        row[5] = "Given";
+        nextGrid = [...nextGrid];
+        nextGrid[r] = row;
+      }
+
+      return { ...state, grid: nextGrid, activeCol: nextCol };
     }
     case "NEXT_COLUMN": {
       const width = colWidth(state.grid);
       const maxExcelRow = state.headerRow + GRID_MAX_DATA_ROWS;
       let nextCol = state.activeCol + 1;
       let nextRow = state.activeRow;
-      if (nextCol > width) {
+      let nextGrid = state.grid;
+
+      // Special logic: If moving from AI (col 5), auto-fill MM (col 6) with "Given" and jump to next row
+      if (state.activeCol === 5) {
+        const r = state.activeRow - 1;
+        const row = padRow([...(nextGrid[r] || [])], width);
+        row[5] = "Given";
+        nextGrid = [...nextGrid];
+        nextGrid[r] = row;
+        nextCol = 1;
+        nextRow = nextRow + 1;
+      } else if (nextCol > width) {
         nextCol = 1;
         nextRow = nextRow + 1;
       }
+
       if (nextRow > maxExcelRow) {
         nextRow = maxExcelRow;
       }
-      let nextGrid = state.grid;
       while (nextGrid.length < nextRow) {
         nextGrid = [...nextGrid, Array(width).fill(null)];
       }
@@ -192,10 +244,17 @@ function reducer(state: WorkbookState, action: Action): WorkbookState {
       if (action.advance === "column") {
         let nextCol = activeCol + 1;
         let nextRow = activeRow;
-        if (nextCol > width) {
+
+        // Special: AI (col 5) auto-fills MM (col 6) with "Given" and jumps
+        if (activeCol === 5) {
+          row[5] = "Given";
+          nextCol = 1;
+          nextRow = activeRow + 1;
+        } else if (nextCol > width) {
           nextCol = 1;
           nextRow = activeRow + 1;
         }
+
         if (nextRow > maxExcelRow) nextRow = maxExcelRow;
         while (g.length < nextRow) {
           g = [...g, Array(width).fill(null)];
@@ -206,6 +265,12 @@ function reducer(state: WorkbookState, action: Action): WorkbookState {
 
       let nextRow = activeRow + 1;
       let nextCol = activeCol;
+
+      // Special: AI (col 5) auto-fills MM (col 6) with "Given"
+      if (activeCol === 5) {
+        row[5] = "Given";
+      }
+
       if (nextRow > maxExcelRow) {
         nextRow = state.headerRow + 1;
         nextCol = Math.min(activeCol + 1, width);
