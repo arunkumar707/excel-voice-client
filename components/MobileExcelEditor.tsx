@@ -498,7 +498,7 @@ export function MobileExcelEditor({ workbookId, workbookName }: Props) {
       });
       setDirtyRows((prev) => new Set(prev).add(filledRow));
     },
-    [state.activeRow, state.activeCol, state.headerRow, state.grid, voiceAdvance, isRowContentLocked]
+    [state.activeRow, state.activeCol, state.headerRow, state.grid, voiceAdvance, isRowContentLocked, triggerLockedPopup]
   );
 
   const onDataCellChange = useCallback((text: string) => {
