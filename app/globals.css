@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0f1419;
+  --surface: #1a2332;
+  --border: #2d3a4d;
+  --accent: #3b82f6;
+  --muted: #94a3b8;
+}
+
+body {
+  @apply min-h-screen antialiased text-slate-100;
+  background: radial-gradient(ellipse 120% 80% at 50% -20%, #1e3a5f 0%, var(--bg) 55%);
+}
+
+/* Designer footer — shimmer text, sweep line, float, dots */
+@keyframes credit-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes credit-sweep {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(280%);
+    opacity: 0;
+  }
+}
+
+@keyframes credit-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes credit-name-glow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    filter: brightness(1);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: brightness(1.12);
+  }
+}
+
+@keyframes credit-dot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+}
+
+.credit-shimmer {
+  background: linear-gradient(
+    90deg,
+    #64748b 0%,
+    #94a3b8 20%,
+    #7dd3fc 40%,
+    #c4b5fd 55%,
+    #7dd3fc 70%,
+    #94a3b8 85%,
+    #64748b 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: credit-shimmer 4s linear infinite;
+}
+
+.credit-sweep-bar {
+  animation: credit-sweep 3.2s ease-in-out infinite;
+}
+
+.credit-float {
+  animation: credit-float 6s ease-in-out infinite;
+}
+
+.credit-name {
+  background: linear-gradient(
+    110deg,
+    #bae6fd 0%,
+    #f8fafc 35%,
+    #ddd6fe 65%,
+    #7dd3fc 100%
+  );
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: credit-name-glow 5s ease-in-out infinite;
+}
+
+.credit-dot {
+  animation: credit-dot-pulse 1.4s ease-in-out infinite;
+}
+
+.credit-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.credit-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .credit-shimmer,
+  .credit-sweep-bar,
+  .credit-float,
+  .credit-name,
+  .credit-dot {
+    animation: none !important;
+  }
+
+  .credit-shimmer {
+    color: #94a3b8;
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
+
+  .credit-name {
+    color: #e2e8f0;
+    background: none;
+    -webkit-background-clip: unset;
+    background-clip: unset;
+  }
+}
