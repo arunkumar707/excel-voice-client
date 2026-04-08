@@ -1,32 +1,21 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ExcelEditor } from "@/components/ExcelEditor";
+import { MobileExcelEditor } from "@/components/MobileExcelEditor";
 import { getAccessToken, nestFetch } from "@/lib/nest-auth-fetch";
 
-export default function ExcelWorkbookPage() {
+export default function MobileExcelWorkbookPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const id = parseInt(String(params.id), 10);
   const [name, setName] = useState("");
 
   useEffect(() => {
     if (!getAccessToken()) {
       router.replace("/login");
-      return;
     }
-
-    // Auto-detect mobile and redirect
-    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isSmallScreen = window.innerWidth < 1024;
-    const forceDesktop = searchParams.get("force") === "desktop";
-
-    if ((isMobileUA || isSmallScreen) && !forceDesktop && Number.isFinite(id)) {
-      router.replace(`/mobile/excel/${id}`);
-    }
-  }, [id, router, searchParams]);
+  }, [router]);
 
   useEffect(() => {
     if (!Number.isFinite(id)) return;
@@ -54,5 +43,5 @@ export default function ExcelWorkbookPage() {
     );
   }
 
-  return <ExcelEditor workbookId={id} workbookName={name || "…"} />;
+  return <MobileExcelEditor workbookId={id} workbookName={name || "…"} />;
 }

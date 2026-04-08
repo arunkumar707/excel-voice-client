@@ -142,7 +142,8 @@ function filterDate(text: string): string {
  * Returns the value that should be written to the grid cell.
  */
 export function applyColVoiceFilter(rawText: string, kind: ColKind): string {
-  const t = rawText.trim();
+  // Strip all dots and commas as per user request to not put "." or "," anywhere
+  let t = rawText.replace(/[.,]/g, "").trim();
   if (!t) return t;
 
   switch (kind) {
