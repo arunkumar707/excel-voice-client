@@ -16,6 +16,7 @@
     "server:build": "cd server && npm run build"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.14.0",
     "exceljs": "^4.4.0",
     "framer-motion": "^11.18.2",
