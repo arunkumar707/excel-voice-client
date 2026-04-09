@@ -36,6 +36,7 @@ export function VoiceRecorder({
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const stopBrowserRef = useRef<(() => void) | null>(null);
+  const manualStopRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +126,7 @@ export function VoiceRecorder({
 
     transcriptRef.current = "";
     const isLong = longDictate;
+    manualStopRef.current = false;
 
     const stop = startBrowserSpeech(
       {
@@ -138,14 +140,14 @@ export function VoiceRecorder({
             transcriptRef.current = text;
             clearSilenceTimer();
             silenceTimerRef.current = setTimeout(() => {
+              silenceTimerRef.current = null;
               const finalVal = transcriptRef.current.trim();
               if (finalVal) {
                 onTranscript(transcriptResponseToIntent({ text: finalVal }));
               }
-              // Restart for fresh transcript for next cell
+              // Stop current session; onEnd will auto-restart it for next cell
               stopBrowserRef.current?.();
-              startBrowser();
-            }, 2000);
+            }, 3000);
           }
         },
         onError: (msg) => {
@@ -158,6 +160,14 @@ export function VoiceRecorder({
           if (!isLong) {
             setBrowserListening(false);
             stopBrowserRef.current = null;
+          } else {
+            // For long dictate, if it ends but we still want to be listening (not manual stop), restart
+            if (!manualStopRef.current && !silenceTimerRef.current) {
+              startBrowser();
+            } else if (manualStopRef.current) {
+              setBrowserListening(false);
+              stopBrowserRef.current = null;
+            }
           }
         },
       },
@@ -174,11 +184,24 @@ export function VoiceRecorder({
   }, [onTranscript, longDictate, clearSilenceTimer]);
 
   const stopBrowser = useCallback(() => {
+    manualStopRef.current = true;
     stopBrowserRef.current?.();
     stopBrowserRef.current = null;
     setBrowserListening(false);
     clearSilenceTimer();
   }, [clearSilenceTimer]);
+
+  useEffect(() => {
+    // If browser is listening and user toggles mode, restart to apply new mode immediately
+    if (browserListening && stopBrowserRef.current) {
+      // Don't set manualStopRef to true here because we WANT it to restart
+      // Actually, let's just stop it manually and call startBrowser ourselves to be explicit
+      manualStopRef.current = true; 
+      stopBrowserRef.current();
+      startBrowser();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [longDictate]);
 
   const browserSupported = typeof window !== "undefined" && isBrowserSpeechSupported();
 
@@ -230,7 +253,20 @@ export function VoiceRecorder({
         <input
           type="checkbox"
           checked={longDictate}
-          onChange={(e) => setLongDictate(e.target.checked)}
+          onChange={(e) => {
+            const val = e.target.checked;
+            setLongDictate(val);
+            if (val && !browserListening) {
+              startBrowser();
+            }
+            // Blur so subsequent spacebars don't toggle it again accidentally
+            e.currentTarget.blur();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === " ") {
+              // Let the change handler do its work, but avoid focus-related issues
+            }
+          }}
           className="h-3.5 w-3.5 rounded border-sky-500/50 bg-slate-900 text-sky-500 focus:ring-sky-500 focus:ring-offset-slate-900"
         />
         <span>Long browser dictate</span>
